@@ -3,22 +3,29 @@ import 'package:calcom_2_0/Model/destino.dart';
 import 'package:calcom_2_0/Model/combustivel.dart';
 import 'package:flutter/material.dart';
 
+import 'Model/DAO/carroDAO.dart';
+import 'Model/DAO/combustivelDAO.dart';
+import 'Model/DAO/destinoDAO.dart';
+
 // ignore: must_be_immutable
 class Menucalculo extends StatefulWidget {
-  List<carro> listCarro;
-  List<destino> listDestino;
-  List<combustivel> listPreco;
-
-  Menucalculo(
-      {required this.listCarro,
-      required this.listDestino,
-      required this.listPreco});
-
   @override
   State<Menucalculo> createState() => _MenucalculoState();
 }
 
 class _MenucalculoState extends State<Menucalculo> {
+  final carroDAO _CarroDAO = new carroDAO();
+  final combustivelDAO _CombustivelDAO = new combustivelDAO();
+  final destinoDAO _DestinoDAO = new destinoDAO();
+
+  @override
+  void initState() {
+    super.initState();
+    _CarroDAO.loadCarros();
+    _CombustivelDAO.loadCombustivel();
+    _DestinoDAO.loadDestino();
+  }
+
   carro? _carroSelecionado;
   destino? _destinoSelecionado;
   combustivel? _precoSelecionado;
@@ -38,6 +45,12 @@ class _MenucalculoState extends State<Menucalculo> {
   void alterarVisibilidade() {
     setState(() {
       _isvisible = true;
+    });
+  }
+
+  void desalterarVisibilidade() {
+    setState(() {
+      _isvisible = false;
     });
   }
 
@@ -78,7 +91,7 @@ class _MenucalculoState extends State<Menucalculo> {
               padding: const EdgeInsets.all(15.0),
               child: SizedBox(
                 width: 300,
-                height: 350,
+                height: 400,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                       color: const Color.fromARGB(255, 235, 131, 23),
@@ -109,29 +122,40 @@ class _MenucalculoState extends State<Menucalculo> {
                           color: const Color.fromARGB(255, 244, 246, 200),
                         ),
                         child: Center(
-                          child: DropdownButton<carro>(
-                            style: const TextStyle(
-                              color: Color.fromARGB(255, 16, 55, 92),
-                            ),
-                            dropdownColor:
-                                const Color.fromARGB(255, 244, 246, 200),
-                            borderRadius: BorderRadius.circular(20),
-                            menuWidth: 140,
-                            menuMaxHeight: 300,
-                            hint: const Text('Veículos'),
-                            value: _carroSelecionado,
-                            onChanged: (carro? novoCarro) {
-                              setState(() {
-                                _carroSelecionado = novoCarro;
-                              });
-                            },
-                            items: widget.listCarro.map((carro carros) {
-                              return DropdownMenuItem<carro>(
-                                value: carros,
-                                child: Text(carros.toString()),
-                              );
-                            }).toList(),
-                          ),
+                          child: StreamBuilder<List<carro>>(
+                              stream: _CarroDAO.carroStreamList,
+                              builder: (context, snapshot) {
+                                if (!snapshot.hasData ||
+                                    snapshot.data!.isEmpty) {
+                                  return const Center(
+                                    child: Text("Vazio"),
+                                  );
+                                }
+                                final listCarro = snapshot.data!;
+                                return DropdownButton<carro>(
+                                  style: const TextStyle(
+                                    color: Color.fromARGB(255, 16, 55, 92),
+                                  ),
+                                  dropdownColor:
+                                      const Color.fromARGB(255, 244, 246, 200),
+                                  borderRadius: BorderRadius.circular(20),
+                                  menuWidth: 140,
+                                  menuMaxHeight: 300,
+                                  hint: const Text('Veículos'),
+                                  value: _carroSelecionado,
+                                  onChanged: (carro? novoCarro) {
+                                    setState(() {
+                                      _carroSelecionado = novoCarro;
+                                    });
+                                  },
+                                  items: listCarro.map((carro carros) {
+                                    return DropdownMenuItem<carro>(
+                                      value: carros,
+                                      child: Text(carros.toString()),
+                                    );
+                                  }).toList(),
+                                );
+                              }),
                         ),
                       ),
 
@@ -160,29 +184,40 @@ class _MenucalculoState extends State<Menucalculo> {
                           color: const Color.fromARGB(255, 244, 246, 200),
                         ),
                         child: Center(
-                          child: DropdownButton<destino>(
-                            style: const TextStyle(
-                              color: Color.fromARGB(255, 16, 55, 92),
-                            ),
-                            dropdownColor:
-                                const Color.fromARGB(255, 244, 246, 200),
-                            borderRadius: BorderRadius.circular(20),
-                            menuWidth: 140,
-                            menuMaxHeight: 300,
-                            hint: const Text('Destinos'),
-                            value: _destinoSelecionado,
-                            onChanged: (destino? novoDestino) {
-                              setState(() {
-                                _destinoSelecionado = novoDestino;
-                              });
-                            },
-                            items: widget.listDestino.map((destino destinos) {
-                              return DropdownMenuItem<destino>(
-                                value: destinos,
-                                child: Text(destinos.toString()),
-                              );
-                            }).toList(),
-                          ),
+                          child: StreamBuilder<List<destino>>(
+                              stream: _DestinoDAO.destinoStreamList,
+                              builder: (context, snapshot) {
+                                if (!snapshot.hasData ||
+                                    snapshot.data!.isEmpty) {
+                                  return const Center(
+                                    child: Text("Vazio"),
+                                  );
+                                }
+                                final listDestino = snapshot.data!;
+                                return DropdownButton<destino>(
+                                  style: const TextStyle(
+                                    color: Color.fromARGB(255, 16, 55, 92),
+                                  ),
+                                  dropdownColor:
+                                      const Color.fromARGB(255, 244, 246, 200),
+                                  borderRadius: BorderRadius.circular(20),
+                                  menuWidth: 140,
+                                  menuMaxHeight: 300,
+                                  hint: const Text('Destinos'),
+                                  value: _destinoSelecionado,
+                                  onChanged: (destino? novoDestino) {
+                                    setState(() {
+                                      _destinoSelecionado = novoDestino;
+                                    });
+                                  },
+                                  items: listDestino.map((destino destinos) {
+                                    return DropdownMenuItem<destino>(
+                                      value: destinos,
+                                      child: Text(destinos.toString()),
+                                    );
+                                  }).toList(),
+                                );
+                              }),
                         ),
                       ),
 
@@ -210,29 +245,67 @@ class _MenucalculoState extends State<Menucalculo> {
                           color: const Color.fromARGB(255, 244, 246, 200),
                         ),
                         child: Center(
-                          child: DropdownButton<combustivel>(
-                            style: const TextStyle(
-                              color: Color.fromARGB(255, 16, 55, 92),
-                            ),
-                            dropdownColor:
-                                const Color.fromARGB(255, 244, 246, 200),
-                            borderRadius: BorderRadius.circular(20),
-                            menuWidth: 200,
-                            menuMaxHeight: 300,
-                            hint: const Text('Combustível'),
-                            value: _precoSelecionado,
-                            onChanged: (combustivel? novoCombustivel) {
-                              setState(() {
-                                _precoSelecionado = novoCombustivel;
-                              });
-                            },
-                            items: widget.listPreco.map((combustivel precos) {
-                              return DropdownMenuItem<combustivel>(
-                                value: precos,
-                                child: Text(precos.toString()),
-                              );
-                            }).toList(),
-                          ),
+                          child: StreamBuilder<List<combustivel>>(
+                              stream: _CombustivelDAO.combustivelStreamList,
+                              builder: (context, snapshot) {
+                                if (!snapshot.hasData ||
+                                    snapshot.data!.isEmpty) {
+                                  return const Center(
+                                    child: Text("Vazio"),
+                                  );
+                                }
+                                final listCombustivel = snapshot.data!;
+                                return DropdownButton<combustivel>(
+                                  style: const TextStyle(
+                                    color: Color.fromARGB(255, 16, 55, 92),
+                                  ),
+                                  dropdownColor:
+                                      const Color.fromARGB(255, 244, 246, 200),
+                                  borderRadius: BorderRadius.circular(20),
+                                  menuWidth: 200,
+                                  menuMaxHeight: 300,
+                                  hint: const Text('Combustível'),
+                                  value: _precoSelecionado,
+                                  onChanged: (combustivel? novoCombustivel) {
+                                    setState(() {
+                                      _precoSelecionado = novoCombustivel;
+                                    });
+                                  },
+                                  items:
+                                      listCombustivel.map((combustivel precos) {
+                                    return DropdownMenuItem<combustivel>(
+                                      value: precos,
+                                      child: Text(precos.toString()),
+                                    );
+                                  }).toList(),
+                                );
+                              }),
+                        ),
+                      ),
+                      const SizedBox(
+                        height: 6,
+                      ),
+                      //BOTÂO ATUALIZAR
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                              const Color.fromARGB(255, 16, 55, 92),
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            desalterarVisibilidade();
+                            _carroSelecionado = null;
+                            _destinoSelecionado = null;
+                            _precoSelecionado = null;
+                            _CarroDAO.loadCarros();
+                            _CombustivelDAO.loadCombustivel();
+                            _DestinoDAO.loadDestino();
+                          });
+                        },
+                        child: const Text(
+                          "Atualizar",
+                          style: TextStyle(
+                              color: const Color.fromARGB(255, 244, 246, 200)),
                         ),
                       ),
                       const SizedBox(
@@ -271,6 +344,9 @@ class _MenucalculoState extends State<Menucalculo> {
                           style: TextStyle(
                               color: const Color.fromARGB(255, 244, 246, 200)),
                         ),
+                      ),
+                      const SizedBox(
+                        height: 6,
                       ),
                     ],
                   ),
@@ -324,7 +400,8 @@ class _MenucalculoState extends State<Menucalculo> {
                                     color: Colors.white,
                                     fontSize: 24,
                                     fontWeight: FontWeight.bold),
-                              ),TextSpan(
+                              ),
+                              TextSpan(
                                 text: _mensagemInfo3,
                                 style: const TextStyle(
                                     color: Color.fromARGB(255, 16, 55, 92),
@@ -337,7 +414,8 @@ class _MenucalculoState extends State<Menucalculo> {
                                     color: Colors.white,
                                     fontSize: 24,
                                     fontWeight: FontWeight.bold),
-                              ),TextSpan(
+                              ),
+                              TextSpan(
                                 text: _mensagemInfo5,
                                 style: const TextStyle(
                                     color: Color.fromARGB(255, 16, 55, 92),

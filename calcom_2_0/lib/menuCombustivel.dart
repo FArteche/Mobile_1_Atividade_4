@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:calcom_2_0/Model/DAO/combustivelDAO.dart';
 import 'package:calcom_2_0/Model/combustivel.dart';
 import 'package:calcom_2_0/card.dart';
 import 'package:flutter/material.dart';
@@ -8,19 +9,12 @@ import 'package:intl/intl.dart';
 
 // ignore: must_be_immutable
 class Menucombustivel extends StatefulWidget {
-  List<combustivel> listCombustivel;
-
-  Menucombustivel({
-    required this.listCombustivel,
-  });
-
   @override
   State<Menucombustivel> createState() => _MenucombustivelState();
 }
 
 class _MenucombustivelState extends State<Menucombustivel> {
-  final StreamController<List<combustivel>> _streamController =
-      StreamController<List<combustivel>>();
+  final combustivelDAO _CombustivelDAO = combustivelDAO();
 
   final controllerTipo = TextEditingController();
   final controllerPreco = TextEditingController();
@@ -32,7 +26,7 @@ class _MenucombustivelState extends State<Menucombustivel> {
       context: context,
       initialDate: dataSelecionada,
       firstDate: DateTime(2020),
-      lastDate: DateTime(2100),
+      lastDate: DateTime(2050),
     );
     if (dataEscolhida != null && dataEscolhida != dataSelecionada) {
       setState(() {
@@ -42,25 +36,14 @@ class _MenucombustivelState extends State<Menucombustivel> {
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _streamController.add(widget.listCombustivel);
-  }
-
   void __addNovoItem(double preco, DateTime data, String tipo) {
-    setState(() {
-      widget.listCombustivel
-          .add(combustivel(preco: preco, data: data, tipo: tipo));
-      _streamController.add(widget.listCombustivel);
-    });
+    _CombustivelDAO.insertCombustivel(
+      combustivel(preco: preco, data: data, tipo: tipo),
+    );
   }
 
-  void __removeItem(int index) {
-    setState(() {
-      widget.listCombustivel.removeAt(index);
-      _streamController.add(widget.listCombustivel);
-    });
+  void __removeItem(int idDel) {
+    _CombustivelDAO.deleteCombustivel(idDel);
   }
 
   @override
@@ -73,23 +56,32 @@ class _MenucombustivelState extends State<Menucombustivel> {
         child: SizedBox(
           child: Center(
             child: StreamBuilder<List<combustivel>>(
-              stream: _streamController.stream,
+              stream: _CombustivelDAO.getCombustivelStream(),
               builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return const CircularProgressIndicator();
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    child: CircularProgressIndicator(),
+                  );
                 }
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Text('Erro: ${snapshot.error}'),
+                  );
+                }
+                final listCombustivel = snapshot.data!;
                 return Column(
                   mainAxisSize: MainAxisSize.max,
                   children: [
                     Expanded(
                       child: ListView.builder(
-                        itemCount: widget.listCombustivel.length,
+                        itemCount: listCombustivel.length,
                         itemBuilder: (context, index) {
                           return CardCo(
-                            data: widget.listCombustivel[index].data,
-                            tipo: widget.listCombustivel[index].tipo,
-                            preco: widget.listCombustivel[index].preco,
-                            onRemove: () => __removeItem(index),
+                            data: listCombustivel[index].data,
+                            tipo: listCombustivel[index].tipo,
+                            preco: listCombustivel[index].preco,
+                            onRemove: () =>
+                                __removeItem(listCombustivel[index].id!),
                           );
                         },
                       ),
@@ -177,7 +169,9 @@ class _MenucombustivelState extends State<Menucombustivel> {
                                                   ],
                                                 ),
                                               ),
-                                              const SizedBox(height: 10,),
+                                              const SizedBox(
+                                                height: 10,
+                                              ),
                                               SizedBox(
                                                 width: 300,
                                                 child: TextField(
@@ -197,7 +191,8 @@ class _MenucombustivelState extends State<Menucombustivel> {
                                                     ),
                                                   ),
                                                   readOnly: true,
-                                                  onTap: () => _selectData(context ),
+                                                  onTap: () =>
+                                                      _selectData(context),
                                                 ),
                                               ),
                                               Padding(
@@ -209,13 +204,21 @@ class _MenucombustivelState extends State<Menucombustivel> {
                                                     onPressed: () {
                                                       if (controllerTipo
                                                           .text.isNotEmpty) {
-                                                        __addNovoItem(double.parse(controllerPreco.text), dataSelecionada, controllerTipo.text);
-                                                        controllerPreco
-                                                            .clear();
-                                                        controllerTipo
-                                                            .clear();
-                                                            controllerdata.text = DateFormat('dd-MM-yyyy').format(DateTime.now());
-                                                            Navigator.pop(context);
+                                                        __addNovoItem(
+                                                            double.parse(
+                                                                controllerPreco
+                                                                    .text),
+                                                            dataSelecionada,
+                                                            controllerTipo
+                                                                .text);
+                                                        controllerPreco.clear();
+                                                        controllerTipo.clear();
+                                                        controllerdata
+                                                            .text = DateFormat(
+                                                                'dd-MM-yyyy')
+                                                            .format(
+                                                                DateTime.now());
+                                                        Navigator.pop(context);
                                                       }
                                                     },
                                                     backgroundColor:
@@ -250,11 +253,5 @@ class _MenucombustivelState extends State<Menucombustivel> {
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _streamController.close(); // Fecha o stream quando o widget for descartado
-    super.dispose();
   }
 }

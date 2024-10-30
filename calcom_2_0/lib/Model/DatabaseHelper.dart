@@ -27,29 +27,26 @@ class DatabaseHelper {
   }
 
   Future _onCreate(Database db, int version) async {
-    await db.execute(
-      '''CREATE TABLE Carro (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      nome_veiculo VARCHAR(255) NOT NULL,
+    await db.execute('''CREATE TABLE Carro (
+      id INTEGER PRIMARY KEY,
+      nome VARCHAR(255) NOT NULL,
       autonomia DOUBLE NOT NULL
-      );
-
-      CREATE TABLE Combustivel (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      data VARCHAR(10) NOT NULL, -- Formato da data: 'YYYY-MM-DD'
+      );''');
+    await db.execute('''CREATE TABLE Combustivel (
+      id INTEGER PRIMARY KEY,
+      data VARCHAR(10) NOT NULL, 
       tipo VARCHAR(50) NOT NULL,
       preco DOUBLE NOT NULL
-      );
-
+      );''');
+    await db.execute('''
       CREATE TABLE Destino (
-      id INT AUTO_INCREMENT PRIMARY KEY,
+      id INTEGER PRIMARY KEY,
       nomedestino VARCHAR(255) NOT NULL,
       distancia DOUBLE NOT NULL
-      );''',
-    );
+      );''');
   }
 
-  Future close() async{
+  Future close() async {
     final db = await database;
     db.close();
   }

@@ -1,3 +1,6 @@
+import 'package:calcom_2_0/Model/DAO/carroDAO.dart';
+import 'package:calcom_2_0/Model/DAO/combustivelDAO.dart';
+import 'package:calcom_2_0/Model/DAO/destinoDAO.dart';
 import 'package:calcom_2_0/Model/carro.dart';
 import 'package:calcom_2_0/Model/destino.dart';
 import 'package:calcom_2_0/Model/combustivel.dart';
@@ -34,11 +37,9 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _index = 0;
 
-  List<carro> listCarro = [carro(nome: 'Vectra', autonomia: 2.0)];
-  List<destino> listDestino = [destino(nomeDestino: 'POA', distancia: 500)];
-  List<combustivel> listCombustivel = [
-    combustivel(preco: 5.4, data: DateTime(2024, 12, 22), tipo: 'Diesel')
-  ];
+  final carroDAO _CarroDAO = new carroDAO();
+  final combustivelDAO _CombustivelDAO = new combustivelDAO();
+  final destinoDAO _DestinoDAO = new destinoDAO();
 
   void _onItemTapped(int index) {
     setState(() {
@@ -52,32 +53,22 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    _paginas = [
-      Menucalculo(
-        listCarro: listCarro,
-        listDestino: listDestino,
-        listPreco: listCombustivel,
-      ),
-      Menucarro(listCarro: listCarro),
-      Menudestino(listDestino: listDestino),
-      Menucombustivel(listCombustivel: listCombustivel)
-    ];
+    _paginas = [Menucalculo(), Menucarro(), Menudestino(), Menucombustivel()];
   }
 
   Widget _reloadPage(int index) {
     switch (index) {
       case 0:
-        return Menucalculo(
-          listCarro: listCarro,
-          listDestino: listDestino,
-          listPreco: listCombustivel,
-        );
+        setState(() {
+          _CarroDAO.loadCarros();
+        });
+        return Menucalculo();
       case 1:
-        return Menucarro(listCarro: listCarro); // Recarrega a Page2
+        return Menucarro(); // Recarrega a Page2
       case 2:
-        return Menudestino(listDestino: listDestino); // Recarrega a Page3
+        return Menudestino(); // Recarrega a Page3
       case 3:
-        return Menucombustivel(listCombustivel: listCombustivel);
+        return Menucombustivel();
       default:
         return const SnackBar(
           content: Text('Erro, Widget não encontrado'),

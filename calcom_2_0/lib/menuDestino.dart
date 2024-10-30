@@ -1,5 +1,4 @@
-import 'dart:async';
-
+import 'package:calcom_2_0/Model/DAO/destinoDAO.dart';
 import 'package:calcom_2_0/Model/destino.dart';
 import 'package:calcom_2_0/card.dart';
 import 'package:flutter/material.dart';
@@ -7,42 +6,24 @@ import 'package:flutter/services.dart';
 
 // ignore: must_be_immutable
 class Menudestino extends StatefulWidget {
-  List<destino> listDestino;
-
-  Menudestino({
-    required this.listDestino,
-  });
-
   @override
   State<Menudestino> createState() => _MenudestinoState();
 }
 
 class _MenudestinoState extends State<Menudestino> {
-  final StreamController<List<destino>> _streamController =
-      StreamController<List<destino>>();
+  final destinoDAO _DestinoDAO = destinoDAO();
 
   final controllerNomeDestino = TextEditingController();
   final controllerDistancia = TextEditingController();
 
-  @override
-  void initState() {
-    super.initState();
-    _streamController.add(widget.listDestino);
-  }
-
   void __addNovoItem(String nomeDestino, double distancia) {
-    setState(() {
-      widget.listDestino
-          .add(destino(nomeDestino: nomeDestino, distancia: distancia));
-      _streamController.add(widget.listDestino);
-    });
+    _DestinoDAO.insertDestino(
+      destino(nomeDestino: nomeDestino, distancia: distancia),
+    );
   }
 
-  void __removeItem(int index) {
-    setState(() {
-      widget.listDestino.removeAt(index);
-      _streamController.add(widget.listDestino);
-    });
+  void __removeItem(int idDel) {
+    _DestinoDAO.deleteDestino(idDel);
   }
 
   @override
@@ -55,22 +36,30 @@ class _MenudestinoState extends State<Menudestino> {
         child: SizedBox(
           child: Center(
             child: StreamBuilder<List<destino>>(
-              stream: _streamController.stream,
+              stream: _DestinoDAO.getDestinoStream(),
               builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return const CircularProgressIndicator();
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    child: CircularProgressIndicator(),
+                  );
                 }
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Text('Erro: ${snapshot.error}'),
+                  );
+                }
+                final listDestino = snapshot.data!;
                 return Column(
                   mainAxisSize: MainAxisSize.max,
                   children: [
                     Expanded(
                       child: ListView.builder(
-                        itemCount: widget.listDestino.length,
+                        itemCount: listDestino.length,
                         itemBuilder: (context, index) {
                           return CardD(
-                            nomeDestino: widget.listDestino[index].nomeDestino,
-                            distancia: widget.listDestino[index].distancia,
-                            onRemove: () => __removeItem(index),
+                            nomeDestino: listDestino[index].nomeDestino,
+                            distancia: listDestino[index].distancia,
+                            onRemove: () => __removeItem(listDestino[index].id!),
                           );
                         },
                       ),
@@ -214,11 +203,5 @@ class _MenudestinoState extends State<Menudestino> {
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _streamController.close(); // Fecha o stream quando o widget for descartado
-    super.dispose();
   }
 }

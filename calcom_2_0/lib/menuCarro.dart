@@ -1,5 +1,4 @@
-import 'dart:async';
-
+import 'package:calcom_2_0/Model/DAO/carroDAO.dart';
 import 'package:calcom_2_0/Model/carro.dart';
 import 'package:calcom_2_0/card.dart';
 import 'package:flutter/material.dart';
@@ -7,41 +6,24 @@ import 'package:flutter/services.dart';
 
 // ignore: must_be_immutable
 class Menucarro extends StatefulWidget {
-  List<carro> listCarro;
-
-  Menucarro({
-    required this.listCarro,
-  });
-
   @override
   State<Menucarro> createState() => _MenucarroState();
 }
 
 class _MenucarroState extends State<Menucarro> {
-  final StreamController<List<carro>> _streamController =
-      StreamController<List<carro>>();
+  final carroDAO _CarroDAO = carroDAO();
 
   final controllerNome = TextEditingController();
   final controllerautonomia = TextEditingController();
 
-  @override
-  void initState() {
-    super.initState();
-    _streamController.add(widget.listCarro);
-  }
-
   void __addNovoItem(String nome, double autonomia) {
-    setState(() {
-      widget.listCarro.add(carro(nome: nome, autonomia: autonomia));
-      _streamController.add(widget.listCarro);
-    });
+    _CarroDAO.insertCarro(
+      carro(nome: nome, autonomia: autonomia),
+    );
   }
 
-  void __removeItem(int index) {
-    setState(() {
-      widget.listCarro.removeAt(index);
-      _streamController.add(widget.listCarro);
-    });
+  void __removeItem(int idDel) {
+    _CarroDAO.deleteCarro(idDel);
   }
 
   @override
@@ -54,22 +36,30 @@ class _MenucarroState extends State<Menucarro> {
         child: SizedBox(
           child: Center(
             child: StreamBuilder<List<carro>>(
-              stream: _streamController.stream,
+              stream: _CarroDAO.getCarroStream(),
               builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return const CircularProgressIndicator();
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    child: CircularProgressIndicator(),
+                  );
                 }
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Text('Erro: ${snapshot.error}'),
+                  );
+                }
+                final listCarro = snapshot.data!;
                 return Column(
                   mainAxisSize: MainAxisSize.max,
                   children: [
                     Expanded(
                       child: ListView.builder(
-                        itemCount: widget.listCarro.length,
+                        itemCount: listCarro.length,
                         itemBuilder: (context, index) {
                           return CardC(
-                            nome: widget.listCarro[index].nome,
-                            autonomia: widget.listCarro[index].autonomia,
-                            onRemove: () => __removeItem(index),
+                            nome: listCarro[index].nome,
+                            autonomia: listCarro[index].autonomia,
+                            onRemove: () => __removeItem(listCarro[index].id!),
                           );
                         },
                       ),
@@ -141,8 +131,7 @@ class _MenucarroState extends State<Menucarro> {
                                                     filled: true,
                                                     labelText:
                                                         'Autonomia do veículo',
-                                                    border:
-                                                        const OutlineInputBorder(
+                                                    border: OutlineInputBorder(
                                                       borderRadius:
                                                           BorderRadius.all(
                                                         Radius.circular(12),
@@ -214,9 +203,9 @@ class _MenucarroState extends State<Menucarro> {
     );
   }
 
-  @override
+/*   @override
   void dispose() {
     _streamController.close(); // Fecha o stream quando o widget for descartado
     super.dispose();
-  }
+  } */
 }
