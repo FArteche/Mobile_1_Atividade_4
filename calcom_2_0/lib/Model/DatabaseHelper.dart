@@ -44,6 +44,14 @@ class DatabaseHelper {
       nomedestino VARCHAR(255) NOT NULL,
       distancia DOUBLE NOT NULL
       );''');
+    await db.execute('''
+      CREATE TABLE Historico (
+      id INTEGER PRIMARY KEY,
+      gasto DOUBLE NOT NULL,
+      histComb VARCHAR(255) NOT NULL,
+      histVeic VARCHAR(255) NOT NULL,
+      histDest VARCHAR(255) NOT NULL
+      );''');
   }
 
   Future close() async {

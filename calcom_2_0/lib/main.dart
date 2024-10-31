@@ -1,9 +1,4 @@
-import 'package:calcom_2_0/Model/DAO/carroDAO.dart';
-import 'package:calcom_2_0/Model/DAO/combustivelDAO.dart';
-import 'package:calcom_2_0/Model/DAO/destinoDAO.dart';
-import 'package:calcom_2_0/Model/carro.dart';
-import 'package:calcom_2_0/Model/destino.dart';
-import 'package:calcom_2_0/Model/combustivel.dart';
+import 'package:calcom_2_0/historicoMenu.dart';
 import 'package:calcom_2_0/menuCalculo.dart';
 import 'package:calcom_2_0/menuCarro.dart';
 import 'package:calcom_2_0/menuCombustivel.dart';
@@ -37,10 +32,6 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _index = 0;
 
-  final carroDAO _CarroDAO = new carroDAO();
-  final combustivelDAO _CombustivelDAO = new combustivelDAO();
-  final destinoDAO _DestinoDAO = new destinoDAO();
-
   void _onItemTapped(int index) {
     setState(() {
       _index = index;
@@ -53,22 +44,44 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    _paginas = [Menucalculo(), Menucarro(), Menudestino(), Menucombustivel()];
+    _paginas = [
+      Menucalculo(),
+      Menucarro(),
+      Menudestino(),
+      Menucombustivel(),
+      historicoMenu()
+    ];
   }
+
+  String _nomePag = 'Cálculo de Combustível';
 
   Widget _reloadPage(int index) {
     switch (index) {
       case 0:
         setState(() {
-          _CarroDAO.loadCarros();
+          _nomePag = 'Cálculo de Combustível';
         });
         return Menucalculo();
       case 1:
-        return Menucarro(); // Recarrega a Page2
+        setState(() {
+          _nomePag = 'Veículos';
+        });
+        return Menucarro();
       case 2:
-        return Menudestino(); // Recarrega a Page3
+      setState(() {
+          _nomePag = 'Destinos';
+        });
+        return Menudestino();
       case 3:
+      setState(() {
+          _nomePag = 'Combustível';
+        });
         return Menucombustivel();
+      case 4:
+      setState(() {
+          _nomePag = 'Histórico de Cálculos';
+        });
+        return historicoMenu();
       default:
         return const SnackBar(
           content: Text('Erro, Widget não encontrado'),
@@ -80,10 +93,10 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Center(
+        title: Center(
           child: Text(
-            'Cálculo de Combustível',
-            style: TextStyle(
+            _nomePag,
+            style: const TextStyle(
               fontSize: 30,
               fontWeight: FontWeight.bold,
               color: Color.fromARGB(255, 16, 55, 92),
@@ -113,6 +126,10 @@ class _MyHomePageState extends State<MyHomePage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.water_drop_outlined),
             label: 'Combustível',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.history),
+            label: 'Histórico',
           ),
         ],
         currentIndex: _index,

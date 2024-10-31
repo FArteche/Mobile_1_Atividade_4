@@ -1,6 +1,9 @@
+import 'package:calcom_2_0/Model/DAO/historicoDAO.dart';
 import 'package:calcom_2_0/Model/carro.dart';
 import 'package:calcom_2_0/Model/destino.dart';
 import 'package:calcom_2_0/Model/combustivel.dart';
+import 'package:calcom_2_0/Model/historico.dart';
+import 'package:calcom_2_0/historicoMenu.dart';
 import 'package:flutter/material.dart';
 
 import 'Model/DAO/carroDAO.dart';
@@ -14,9 +17,10 @@ class Menucalculo extends StatefulWidget {
 }
 
 class _MenucalculoState extends State<Menucalculo> {
-  final carroDAO _CarroDAO = new carroDAO();
-  final combustivelDAO _CombustivelDAO = new combustivelDAO();
-  final destinoDAO _DestinoDAO = new destinoDAO();
+  final carroDAO _CarroDAO = carroDAO();
+  final combustivelDAO _CombustivelDAO = combustivelDAO();
+  final destinoDAO _DestinoDAO = destinoDAO();
+  final historicoDAO _HistoricoDAO = historicoDAO();
 
   @override
   void initState() {
@@ -91,7 +95,7 @@ class _MenucalculoState extends State<Menucalculo> {
               padding: const EdgeInsets.all(15.0),
               child: SizedBox(
                 width: 300,
-                height: 400,
+                height: 375,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                       color: const Color.fromARGB(255, 235, 131, 23),
@@ -173,7 +177,6 @@ class _MenucalculoState extends State<Menucalculo> {
                         ),
                       ),
                       //DROPDOWN DESTINO
-
                       Container(
                         width: 140,
                         decoration: BoxDecoration(
@@ -283,67 +286,83 @@ class _MenucalculoState extends State<Menucalculo> {
                         ),
                       ),
                       const SizedBox(
-                        height: 6,
+                        height: 20,
                       ),
                       //BOTÂO ATUALIZAR
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              const Color.fromARGB(255, 16, 55, 92),
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            desalterarVisibilidade();
-                            _carroSelecionado = null;
-                            _destinoSelecionado = null;
-                            _precoSelecionado = null;
-                            _CarroDAO.loadCarros();
-                            _CombustivelDAO.loadCombustivel();
-                            _DestinoDAO.loadDestino();
-                          });
-                        },
-                        child: const Text(
-                          "Atualizar",
-                          style: TextStyle(
-                              color: const Color.fromARGB(255, 244, 246, 200)),
-                        ),
-                      ),
-                      const SizedBox(
-                        height: 6,
-                      ),
-                      //BOTÂO CALCULAR
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              const Color.fromARGB(255, 16, 55, 92),
-                        ),
-                        onPressed: () {
-                          if (_carroSelecionado != null &&
-                              _precoSelecionado != null &&
-                              _destinoSelecionado != null) {
-                            setState(
-                              () {
-                                calculo(
-                                    _carroSelecionado!.autonomia,
-                                    _precoSelecionado!.preco,
-                                    _destinoSelecionado!.distancia);
-                                alterarVisibilidade();
-                              },
-                            );
-                          } else {
-                            _mensagemErroBuilder();
-                            var erronull = SnackBar(
-                              content: Text(_mensagemErro),
-                            );
-                            ScaffoldMessenger.of(context)
-                                .showSnackBar(erronull);
-                          }
-                        },
-                        child: const Text(
-                          "Calcular",
-                          style: TextStyle(
-                              color: const Color.fromARGB(255, 244, 246, 200)),
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  const Color.fromARGB(255, 16, 55, 92),
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                desalterarVisibilidade();
+                                _carroSelecionado = null;
+                                _destinoSelecionado = null;
+                                _precoSelecionado = null;
+                                _CarroDAO.loadCarros();
+                                _CombustivelDAO.loadCombustivel();
+                                _DestinoDAO.loadDestino();
+                              });
+                            },
+                            child: const Text(
+                              "Atualizar",
+                              style: TextStyle(
+                                  color:
+                                      const Color.fromARGB(255, 244, 246, 200)),
+                            ),
+                          ),
+                          const SizedBox(
+                            width: 30,
+                          ),
+                          //BOTÂO CALCULAR
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  const Color.fromARGB(255, 36, 111, 180),
+                            ),
+                            onPressed: () {
+                              if (_carroSelecionado != null &&
+                                  _precoSelecionado != null &&
+                                  _destinoSelecionado != null) {
+                                setState(
+                                  () {
+                                    calculo(
+                                        _carroSelecionado!.autonomia,
+                                        _precoSelecionado!.preco,
+                                        _destinoSelecionado!.distancia);
+                                    alterarVisibilidade();
+                                    _HistoricoDAO.insertHistorico(
+                                      historico(
+                                          gasto: resultado,
+                                          histComb: _precoSelecionado!.preco
+                                              .toString(),
+                                          histVeic: _carroSelecionado!.nome,
+                                          histDest:
+                                              _destinoSelecionado!.nomeDestino),
+                                    );
+                                  },
+                                );
+                              } else {
+                                _mensagemErroBuilder();
+                                var erronull = SnackBar(
+                                  content: Text(_mensagemErro),
+                                );
+                                ScaffoldMessenger.of(context)
+                                    .showSnackBar(erronull);
+                              }
+                            },
+                            child: const Text(
+                              "Calcular",
+                              style: TextStyle(
+                                  color:
+                                      const Color.fromARGB(255, 244, 246, 200)),
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(
                         height: 6,
